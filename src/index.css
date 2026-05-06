@@ -102,9 +102,9 @@
   }
 }
 
-@keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+@keyframes rotate-y {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
 }
 @keyframes float {
   0%, 100% { transform: translateY(0); }
@@ -114,6 +114,6 @@
   0%, 100% { opacity: 0.4; }
   50% { opacity: 0.8; }
 }
-.animate-spin-slow { animation: spin-slow 30s linear infinite; }
+.animate-rotate-y { animation: rotate-y 12s linear infinite; transform-origin: 50% 50%; }
 .animate-float { animation: float 6s ease-in-out infinite; }
 .animate-pulse-glow { animation: pulse-glow 4s ease-in-out infinite; }
