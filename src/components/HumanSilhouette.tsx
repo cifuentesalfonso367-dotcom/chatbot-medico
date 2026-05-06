@@ -3,8 +3,13 @@ import bodyImg from "@/assets/human-body.png";
 
 const HumanSilhouette = () => {
   const ref = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
   const [progress, setProgress] = useState(0);
-  const [hover, setHover] = useState(false);
+  const [mouse, setMouse] = useState<{ x: number; y: number; active: boolean }>({
+    x: 50,
+    y: 50,
+    active: false,
+  });
 
   useEffect(() => {
     const onScroll = () => {
@@ -12,7 +17,6 @@ const HumanSilhouette = () => {
       if (!el) return;
       const rect = el.getBoundingClientRect();
       const vh = window.innerHeight;
-      // 0 cuando aún no entra, 1 cuando ya pasó completo
       const raw = 1 - (rect.top + rect.height * 0.2) / vh;
       setProgress(Math.max(0, Math.min(1, raw)));
     };
@@ -25,31 +29,73 @@ const HumanSilhouette = () => {
     };
   }, []);
 
-  // Reveal effect: gradient mask que va descubriendo de arriba a abajo
+  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setMouse({ x, y, active: true });
+  };
+
+  // Reveal mask: descubre de arriba a abajo con scroll
   const revealPct = 10 + progress * 95;
-  const maskImage = `linear-gradient(to bottom, hsl(0 0% 0% / 1) 0%, hsl(0 0% 0% / 1) ${revealPct}%, hsl(0 0% 0% / 0) ${Math.min(100, revealPct + 8)}%)`;
+  const revealMask = `linear-gradient(to bottom, hsl(0 0% 0%) 0%, hsl(0 0% 0%) ${revealPct}%, hsl(0 0% 0% / 0) ${Math.min(100, revealPct + 8)}%)`;
 
   return (
     <div
       ref={ref}
-      className="pointer-events-auto absolute inset-0 flex items-center justify-center overflow-hidden"
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
+      className="absolute inset-0 flex items-center justify-center overflow-hidden"
+      onMouseMove={handleMove}
+      onMouseLeave={() => setMouse((m) => ({ ...m, active: false }))}
     >
-      {/* halo suave */}
       <div className="pointer-events-none absolute h-[120%] w-[120%] bg-gradient-glow opacity-60" />
 
       <div
-        className="relative h-[100%] aspect-[2/3] transition-[filter,opacity,transform] duration-700 ease-out"
+        className="relative h-full aspect-[2/3] transition-[opacity,transform] duration-700 ease-out"
         style={{
-          filter: hover
-            ? "blur(14px) saturate(0.9)"
-            : "blur(0px) saturate(1)",
-          opacity: 0.15 + progress * 0.55,
+          opacity: 0.18 + progress * 0.55,
           transform: `translateY(${(1 - progress) * 30}px) scale(${0.96 + progress * 0.04})`,
         }}
       >
+        {/* SVG con filtro de distorsión líquida que sigue al cursor */}
+        <svg className="absolute h-0 w-0" aria-hidden="true">
+          <defs>
+            <filter id="liquid-distort" x="-20%" y="-20%" width="140%" height="140%">
+              <feTurbulence
+                type="fractalNoise"
+                baseFrequency="0.012"
+                numOctaves="2"
+                seed="4"
+                result="noise"
+              >
+                <animate
+                  attributeName="baseFrequency"
+                  dur="14s"
+                  values="0.010;0.018;0.010"
+                  repeatCount="indefinite"
+                />
+              </feTurbulence>
+              <feDisplacementMap
+                in="SourceGraphic"
+                in2="noise"
+                scale={mouse.active ? 40 : 0}
+                xChannelSelector="R"
+                yChannelSelector="G"
+              >
+                <animate
+                  attributeName="scale"
+                  dur="0.6s"
+                  to={mouse.active ? "40" : "0"}
+                  fill="freeze"
+                />
+              </feDisplacementMap>
+            </filter>
+          </defs>
+        </svg>
+
         <img
+          ref={imgRef}
           src={bodyImg}
           alt=""
           aria-hidden="true"
@@ -57,18 +103,29 @@ const HumanSilhouette = () => {
           width={1024}
           height={1536}
           draggable={false}
-          className="h-full w-full select-none object-contain"
+          className="h-full w-full select-none object-contain transition-[filter] duration-500"
           style={{
-            WebkitMaskImage: maskImage,
-            maskImage,
+            WebkitMaskImage: revealMask,
+            maskImage: revealMask,
             WebkitMaskRepeat: "no-repeat",
             maskRepeat: "no-repeat",
             mixBlendMode: "multiply",
+            filter: mouse.active ? "url(#liquid-distort) blur(2px)" : "none",
           }}
         />
+
+        {/* Halo radial que sigue al cursor cuando está activo */}
+        {mouse.active && (
+          <div
+            className="pointer-events-none absolute inset-0 transition-opacity duration-300"
+            style={{
+              background: `radial-gradient(circle 180px at ${mouse.x}% ${mouse.y}%, hsl(var(--primary) / 0.35), transparent 70%)`,
+              mixBlendMode: "screen",
+            }}
+          />
+        )}
       </div>
 
-      {/* viñeta para integrarlo con el card */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-card/40 via-transparent to-card/60" />
     </div>
   );
