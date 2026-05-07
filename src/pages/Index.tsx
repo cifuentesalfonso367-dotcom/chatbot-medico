@@ -72,7 +72,10 @@ const Index = () => {
     if (inputRef.current) inputRef.current.value = "";
 
     try {
-      const body: any = { text: sentText };
+      const history = messages
+        .filter((m) => m.id !== "welcome")
+        .map((m) => ({ role: m.role, content: m.content }));
+      const body: any = { text: sentText, history };
       if (sentFile) {
         body.fileBase64 = await fileToBase64(sentFile);
         body.mimeType = sentFile.type;
