@@ -54,8 +54,8 @@ const HumanSilhouette = () => {
       <div
         className="relative h-full aspect-[2/3] transition-[opacity,transform] duration-700 ease-out"
         style={{
-          opacity: 0.18 + progress * 0.55,
-          transform: `translateY(${(1 - progress) * 30}px) scale(${0.96 + progress * 0.04})`,
+          opacity: 0.45 + progress * 0.5,
+          transform: `translateY(${(1 - progress) * 20}px) scale(${0.97 + progress * 0.04})`,
         }}
       >
         {/* SVG con filtro de distorsión líquida que sigue al cursor */}
