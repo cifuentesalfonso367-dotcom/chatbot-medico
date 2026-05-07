@@ -214,13 +214,24 @@ const Index = () => {
             >
               <Paperclip className="h-4 w-4" />
             </Button>
-            <div className="flex-1 truncate rounded-xl border border-border bg-background/60 px-4 py-2.5 text-sm text-muted-foreground">
-              {file ? "Listo para analizar tu examen" : "Adjunta una imagen o PDF de tu examen..."}
-            </div>
+            <input
+              type="text"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  send();
+                }
+              }}
+              placeholder={file ? "Añade un mensaje (opcional)..." : "Escribe tu mensaje o adjunta un examen..."}
+              disabled={loading}
+              className="flex-1 rounded-xl border border-border bg-background/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            />
             <Button
               type="button"
               onClick={send}
-              disabled={!file || loading}
+              disabled={(!file && !text.trim()) || loading}
               className="shrink-0 rounded-xl bg-gradient-primary text-primary-foreground shadow-elegant hover:opacity-90"
               aria-label="Enviar"
             >
