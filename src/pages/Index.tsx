@@ -106,13 +106,6 @@ const Index = () => {
       <div className="pointer-events-none absolute -left-32 top-20 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
       <div className="pointer-events-none absolute -right-32 bottom-20 h-96 w-96 rounded-full bg-accent/20 blur-3xl" />
 
-      {/* Silueta humana de fondo (interactiva con el mouse) */}
-      <div className="pointer-events-none absolute inset-0 z-0">
-        <div className="pointer-events-auto absolute inset-0">
-          <HumanSilhouette />
-        </div>
-      </div>
-
       <div className="relative z-10 mx-auto flex h-full max-w-3xl flex-col px-4 py-6">
         {/* Header */}
         <header className="mb-4 flex items-center justify-between rounded-2xl border border-border bg-card/70 px-5 py-3 backdrop-blur-xl shadow-soft">
