@@ -126,8 +126,15 @@ const Index = () => {
         {/* Chat messages */}
         <div
           ref={scrollRef}
-          className="flex-1 space-y-4 overflow-y-auto rounded-2xl border border-border bg-card/40 p-4 backdrop-blur-md md:p-6"
+          className="relative flex-1 space-y-4 overflow-y-auto rounded-2xl border border-border bg-card/40 p-4 backdrop-blur-md md:p-6"
         >
+          {/* Silueta humana de fondo, dentro del chat */}
+          <div className="pointer-events-none absolute inset-0 z-0">
+            <div className="pointer-events-auto absolute inset-0">
+              <HumanSilhouette />
+            </div>
+          </div>
+          <div className="relative z-10 space-y-4">
           {messages.map((m) => (
             <div
               key={m.id}
