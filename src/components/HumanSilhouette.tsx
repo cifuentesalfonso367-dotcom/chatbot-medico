@@ -39,8 +39,7 @@ const HumanSilhouette = () => {
   };
 
   // Reveal mask: descubre de arriba a abajo con scroll
-  const revealPct = 10 + progress * 95;
-  const revealMask = `linear-gradient(to bottom, hsl(0 0% 0%) 0%, hsl(0 0% 0%) ${revealPct}%, hsl(0 0% 0% / 0) ${Math.min(100, revealPct + 8)}%)`;
+  const revealMask = `linear-gradient(to bottom, hsl(0 0% 0%) 0%, hsl(0 0% 0%) 100%)`;
 
   return (
     <div
