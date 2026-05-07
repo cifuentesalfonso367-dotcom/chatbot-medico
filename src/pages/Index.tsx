@@ -31,6 +31,7 @@ const Index = () => {
     },
   ]);
   const [file, setFile] = useState<File | null>(null);
+  const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
