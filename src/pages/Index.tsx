@@ -54,24 +54,31 @@ const Index = () => {
   };
 
   const send = async () => {
-    if (!file || loading) return;
+    if (loading) return;
+    if (!file && !text.trim()) return;
+
+    const sentFile = file;
+    const sentText = text.trim();
     const userMsg: Message = {
       id: crypto.randomUUID(),
       role: "user",
-      content: `📎 ${file.name}`,
-      fileName: file.name,
+      content: sentText || `📎 ${sentFile!.name}`,
+      fileName: sentFile?.name,
     };
     setMessages((p) => [...p, userMsg]);
     setLoading(true);
-    const sentFile = file;
     setFile(null);
+    setText("");
     if (inputRef.current) inputRef.current.value = "";
 
     try {
-      const base64 = await fileToBase64(sentFile);
-      const { data, error } = await supabase.functions.invoke("analyze-exam", {
-        body: { fileBase64: base64, mimeType: sentFile.type, fileName: sentFile.name },
-      });
+      const body: any = { text: sentText };
+      if (sentFile) {
+        body.fileBase64 = await fileToBase64(sentFile);
+        body.mimeType = sentFile.type;
+        body.fileName = sentFile.name;
+      }
+      const { data, error } = await supabase.functions.invoke("analyze-exam", { body });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setMessages((p) => [
@@ -85,7 +92,7 @@ const Index = () => {
         {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: "❌ No pude analizar el examen. Intenta de nuevo.",
+          content: "❌ No pude responder. Intenta de nuevo.",
         },
       ]);
     } finally {
