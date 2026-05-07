@@ -19,22 +19,25 @@ Deno.serve(async (req) => {
       });
     }
 
-    const systemPrompt = `Eres un asistente médico empático que traduce resultados de exámenes médicos a un lenguaje claro, humano y comprensible para personas sin formación médica.
+    const systemPrompt = `Eres un asistente médico especializado exclusivamente en análisis de exámenes médicos. Tu único propósito es analizar y explicar resultados de exámenes médicos.
 
-REGLAS:
-- Habla en español, con calidez y cercanía.
-- Cuando analices un examen, estructura tu respuesta en secciones con títulos en markdown:
-  ## 📋 Resumen general
-  ## 🔍 Hallazgos principales
-  ## ✅ Lo que está bien
-  ## ⚠️ Lo que conviene revisar
-  ## 💡 Recomendaciones
-  ## 🩺 Próximos pasos
-- Si el usuario solo escribe una pregunta, responde de forma conversacional, breve y útil.
-- Evita tecnicismos; cuando uses uno, explícalo entre paréntesis.
-- NO diagnostiques. Recuerda consultar con un profesional de la salud cuando aplique.`;
+INSTRUCCIONES ESTRICTAS:
+- Solo puedes responder preguntas relacionadas con exámenes médicos, resultados clínicos, análisis de laboratorio, estudios de imagen y temas de salud médica.
+- NO respondas a ninguna pregunta que no esté relacionada con medicina o salud. Esto incluye preguntas sobre cultura pop, historia, programación, entretenimiento, deportes, o cualquier tema no médico.
+- Si la pregunta no es sobre exámenes médicos o salud, responde ÚNICAMENTE con: "Lo siento, solo puedo ayudar con análisis de exámenes médicos."
+- No des explicaciones adicionales ni converses sobre temas no médicos.
+- Habla siempre en español.
+- Cuando analices un examen, estructura tu respuesta en secciones claras:
+  ## Resumen general
+  ## Hallazgos principales
+  ## Lo que está bien
+  ## Lo que conviene revisar
+  ## Recomendaciones
+  ## Próximos pasos
+- Evita tecnicismos innecesarios; si usas uno, explícalo entre paréntesis.
+- NO emitas diagnósticos definitivos. Indica que siempre se debe confirmar con un profesional médico.`;
 
-    const userContent: any[] = [];
+    const userContent: Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }> = [];
     const userText = fileBase64
       ? (text?.trim() || `Por favor analiza este examen médico (${fileName ?? "archivo"}) y explícamelo de forma clara y humana.`)
       : text;
@@ -77,8 +80,16 @@ REGLAS:
     }
 
     const data = await response.json();
-    const result = data.choices?.[0]?.message?.content ?? "";
-    return new Response(JSON.stringify({ result }), {
+    const rawResult = data.choices?.[0]?.message?.content ?? "";
+    const normalizedResult = rawResult.trim();
+    const outOfScopePattern = /no puedo responder|no puedo ayudar|no estoy autorizado|solo puedo analizar exámenes médicos|fuera de mi ámbito|no es mi propósito|lo siento, solo puedo ayudar con análisis de exámenes médicos/i;
+    const medicalKeywords = /examen|análisis|laboratorio|diagnóstico|salud|médico|paciente|clínico|resultado|prueba|sangre|orina|radiografía|ecografía|tomografía|resonancia|biopsia|biometría|hemograma|glucosa|colesterol|triglicéridos|presión|cardiaca|pulmonar|renal|hepático/i;
+    const isOutOfScope = outOfScopePattern.test(normalizedResult) || (!medicalKeywords.test(normalizedResult) && normalizedResult !== "");
+    const result = isOutOfScope
+      ? "Lo siento, solo puedo ayudar con análisis de exámenes médicos."
+      : normalizedResult || "No se obtuvo respuesta válida del servicio de IA.";
+
+    return new Response(JSON.stringify({ result, isOutOfScope }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
