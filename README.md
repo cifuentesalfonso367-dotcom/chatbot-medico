@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Human Report AI
 
 Proyecto Next.js para análisis de exámenes y generación de reportes con integración a Supabase.
@@ -54,3 +55,4 @@ Este proyecto incluye una acción de CI en `.github/workflows/ci.yml` que ejecut
 - lint
 - pruebas
 - build
+
