@@ -31,6 +31,7 @@ const Index = () => {
     },
   ]);
   const [file, setFile] = useState<File | null>(null);
+  const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -53,24 +54,31 @@ const Index = () => {
   };
 
   const send = async () => {
-    if (!file || loading) return;
+    if (loading) return;
+    if (!file && !text.trim()) return;
+
+    const sentFile = file;
+    const sentText = text.trim();
     const userMsg: Message = {
       id: crypto.randomUUID(),
       role: "user",
-      content: `📎 ${file.name}`,
-      fileName: file.name,
+      content: sentText || `📎 ${sentFile!.name}`,
+      fileName: sentFile?.name,
     };
     setMessages((p) => [...p, userMsg]);
     setLoading(true);
-    const sentFile = file;
     setFile(null);
+    setText("");
     if (inputRef.current) inputRef.current.value = "";
 
     try {
-      const base64 = await fileToBase64(sentFile);
-      const { data, error } = await supabase.functions.invoke("analyze-exam", {
-        body: { fileBase64: base64, mimeType: sentFile.type, fileName: sentFile.name },
-      });
+      const body: any = { text: sentText };
+      if (sentFile) {
+        body.fileBase64 = await fileToBase64(sentFile);
+        body.mimeType = sentFile.type;
+        body.fileName = sentFile.name;
+      }
+      const { data, error } = await supabase.functions.invoke("analyze-exam", { body });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setMessages((p) => [
@@ -84,7 +92,7 @@ const Index = () => {
         {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: "❌ No pude analizar el examen. Intenta de nuevo.",
+          content: "❌ No pude responder. Intenta de nuevo.",
         },
       ]);
     } finally {
@@ -97,13 +105,6 @@ const Index = () => {
       {/* Decorative blobs */}
       <div className="pointer-events-none absolute -left-32 top-20 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
       <div className="pointer-events-none absolute -right-32 bottom-20 h-96 w-96 rounded-full bg-accent/20 blur-3xl" />
-
-      {/* Silueta humana de fondo (interactiva con el mouse) */}
-      <div className="pointer-events-none absolute inset-0 z-0">
-        <div className="pointer-events-auto absolute inset-0">
-          <HumanSilhouette />
-        </div>
-      </div>
 
       <div className="relative z-10 mx-auto flex h-full max-w-3xl flex-col px-4 py-6">
         {/* Header */}
@@ -125,8 +126,15 @@ const Index = () => {
         {/* Chat messages */}
         <div
           ref={scrollRef}
-          className="flex-1 space-y-4 overflow-y-auto rounded-2xl border border-border bg-card/40 p-4 backdrop-blur-md md:p-6"
+          className="relative flex-1 space-y-4 overflow-y-auto rounded-2xl border border-border bg-card/40 p-4 backdrop-blur-md md:p-6"
         >
+          {/* Silueta humana de fondo, dentro del chat */}
+          <div className="pointer-events-none absolute inset-0 z-0">
+            <div className="pointer-events-auto absolute inset-0">
+              <HumanSilhouette />
+            </div>
+          </div>
+          <div className="relative z-10 space-y-4">
           {messages.map((m) => (
             <div
               key={m.id}
@@ -168,6 +176,7 @@ const Index = () => {
               </div>
             </div>
           )}
+          </div>
         </div>
 
         {/* Input bar */}
@@ -205,13 +214,24 @@ const Index = () => {
             >
               <Paperclip className="h-4 w-4" />
             </Button>
-            <div className="flex-1 truncate rounded-xl border border-border bg-background/60 px-4 py-2.5 text-sm text-muted-foreground">
-              {file ? "Listo para analizar tu examen" : "Adjunta una imagen o PDF de tu examen..."}
-            </div>
+            <input
+              type="text"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  send();
+                }
+              }}
+              placeholder={file ? "Añade un mensaje (opcional)..." : "Escribe tu mensaje o adjunta un examen..."}
+              disabled={loading}
+              className="flex-1 rounded-xl border border-border bg-background/60 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            />
             <Button
               type="button"
               onClick={send}
-              disabled={!file || loading}
+              disabled={(!file && !text.trim()) || loading}
               className="shrink-0 rounded-xl bg-gradient-primary text-primary-foreground shadow-elegant hover:opacity-90"
               aria-label="Enviar"
             >
