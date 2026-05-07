@@ -109,8 +109,7 @@ const HumanSilhouette = () => {
             maskImage: revealMask,
             WebkitMaskRepeat: "no-repeat",
             maskRepeat: "no-repeat",
-            mixBlendMode: "multiply",
-            filter: mouse.active ? "url(#liquid-distort) blur(2px)" : "none",
+            filter: mouse.active ? "url(#liquid-distort) blur(2px) contrast(1.05)" : "contrast(1.08) saturate(1.05)",
           }}
         />
 
